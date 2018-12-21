@@ -99,6 +99,10 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                     listView.finishLoadMore();
                     progressBar.setVisibility(View.GONE);     // To Hide ProgressBar
                     break;
+                case 2:
+                    Toast.makeText(MainActivity.this,msg.obj.toString(),Toast.LENGTH_LONG).show();
+                    progressBar.setVisibility(View.GONE);     // To Hide ProgressBar
+                    break;
             }
             return true;
         }
@@ -120,7 +124,11 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                     call.enqueue(new Callback() {
                         @Override
                         public void onFailure(Call call, IOException e) {
-                            Toast.makeText(MainActivity.this,"服务异常...",Toast.LENGTH_LONG).show();
+                            //
+                            Message message=new Message();
+                            message.obj="无法连接到服务器...";
+                            message.what=2;
+                            handler.sendMessage(message);
                         }
 
                         @Override
