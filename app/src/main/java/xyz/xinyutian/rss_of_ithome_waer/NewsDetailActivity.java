@@ -15,6 +15,8 @@ import com.alibaba.fastjson.JSON;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -28,6 +30,8 @@ public class NewsDetailActivity extends AppCompatActivity {
 
     private TextView title;
     private TextView content;
+
+    private final static Logger logger = Logger.getLogger("NewsDetailActivity");
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,52 +63,47 @@ public class NewsDetailActivity extends AppCompatActivity {
     });
 
     public void getNews(final String id){
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                String rss="http://it.androideveloper.club/api/item?id="+id;
-                try {
-                    OkHttpClient okHttpClient = new OkHttpClient();
-                    final Request request = new Request.Builder()
-                            .url(rss)
-                            .get()//默认就是GET请求，可以不写
-                            .build();
-                    Call call = okHttpClient.newCall(request);
-                    call.enqueue(new Callback() {
-                        @Override
-                        public void onFailure(Call call, IOException e) {
+        new Thread(() -> {
+            String rss="http://it.androideveloper.club/api/item?id="+id;
+            try {
+                OkHttpClient okHttpClient = new OkHttpClient();
+                final Request request = new Request.Builder()
+                        .url(rss)
+                        .get()
+                        .build();
+                Call call = okHttpClient.newCall(request);
+                call.enqueue(new Callback() {
+                    @Override
+                    public void onFailure(Call call, IOException e) {
+                        logger.log(Level.WARNING,e.getCause().getMessage());
+                    }
 
-                        }
-
-                        @Override
-                        public void onResponse(Call call, Response response) throws IOException {
-                            Message message=new Message();
-                            message.obj=response.body().string();
-                            message.what=1;
-                            handler.sendMessage(message);
-                        }
-                    });
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+                    @Override
+                    public void onResponse(Call call, Response response) throws IOException {
+                        Message message=new Message();
+                        message.obj=response.body().string();
+                        message.what=1;
+                        handler.sendMessage(message);
+                    }
+                });
+            } catch (Exception e) {
+                logger.log(Level.WARNING,e.getMessage());
             }
         }).start();
     }
 
-    Html.ImageGetter imgGetter = new Html.ImageGetter() {
-        public Drawable getDrawable(String source) {
-            Drawable drawable = null;
-            URL url = null;
-            try {
-                url = new URL(source);
-                drawable = Drawable.createFromStream(url.openStream(), "");
-            } catch (Exception e) {
-                return null;
-            }
-            drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable
-                    .getIntrinsicHeight());
-            return drawable;
+    Html.ImageGetter imgGetter = source -> {
+        Drawable drawable;
+        URL url;
+        try {
+            url = new URL(source);
+            drawable = Drawable.createFromStream(url.openStream(), "");
+        } catch (Exception e) {
+            return null;
         }
+        drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable
+                .getIntrinsicHeight());
+        return drawable;
     };
 
 }
